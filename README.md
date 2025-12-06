@@ -1,3 +1,7 @@
+![Python](https://img.shields.io/badge/python-3.7+-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![AI Generated](https://img.shields.io/badge/AI-Generated-purple.svg)
+
 # 📚 Sistema de Consulta de Alunos em Planilha Excel
 
 ## 🤖 Sobre este Projeto
