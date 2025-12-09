@@ -42,6 +42,8 @@ Sistema automatizado para consultar nomes de alunos em planilhas Excel e gerar r
 
 O sistema realiza buscas inteligentes que ignoram acentos, maiúsculas/minúsculas e espaços extras, garantindo alta taxa de sucesso na localização dos registros.
 
+**✨ Novo:** Agora com exportação para Excel (.xlsx) além de TXT, com formatação automática e cores para fácil visualização!
+
 ---
 
 ## 💻 Requisitos
@@ -230,10 +232,10 @@ Quando um aluno aparece múltiplas vezes na planilha:
 Ative para troubleshooting e análise detalhada:
 
 ```
-🔍 Buscando: 'CLÁUDIA SILVA SOUZA '
-   Normalizado: 'CLAUDIA SILVA SOUZA'
+🔍 Buscando: 'CLAUDETE DO NASCIMENTO ARAUJO'
+   Normalizado: 'CLAUDETE DO NASCIMENTO ARAUJO'
    ⚠️ Nomes similares encontrados:
-      - 'Cláudia Silva Souza' → 'CLAUDIA SILVA SOUZA'
+      - 'Claudete do Nascimento Araújo' → 'CLAUDETE DO NASCIMENTO ARAUJO'
 ```
 
 Útil para:
@@ -422,8 +424,33 @@ formatar_data(datetime(2025, 12, 6, 14, 30, 0))
 
 ---
 
+#### `gerar_relatorio_excel(resultados, arquivo_saida)`
+**Propósito:** Gera arquivo de relatório em formato Excel com formatação.
+
+**Parâmetros:**
+- `resultados` (list): Lista de dicionários com dados
+- `arquivo_saida` (str): Nome do arquivo de saída (.xlsx)
+
+**Formatação Aplicada:**
+- Cabeçalho com fundo azul e texto branco em negrito
+- Larguras de coluna ajustadas automaticamente
+- Alinhamento centralizado (exceto coluna de nomes)
+- Cores condicionais baseadas na situação:
+  - Verde (#C6EFCE) para APROVADO
+  - Vermelho (#FFC7CE) para REPROVADO
+  - Branco para NÃO CONSTA
+
+**Dependências:** `openpyxl.styles` (Font, PatternFill, Alignment)
+
+**Estrutura da Planilha:**
+```
+| Nome do Aluno | Status | Pontuação | Situação | Data/Hora |
+```
+
+---
+
 #### `gerar_relatorio_txt(resultados, arquivo_saida)`
-**Propósito:** Gera arquivo de relatório formatado.
+**Propósito:** Gera arquivo de relatório em formato texto.
 
 **Parâmetros:**
 - `resultados` (list): Lista de dicionários com dados
@@ -475,9 +502,84 @@ DETALHAMENTO POR ALUNO:
 2. Solicita caminho da planilha
 3. Carrega e valida dados
 4. Solicita método de entrada de nomes
-5. Processa consultas
-6. Gera relatório
-7. Exibe resumo
+5. Processa consultas (com opção de DEBUG)
+6. Solicita formato de saída (TXT, Excel ou ambos)
+7. Gera relatório(s)
+8. Exibe resumo
+
+---
+
+## 📊 Exportação para Excel
+
+### Estrutura da Planilha Excel
+
+O relatório em Excel é gerado com a seguinte estrutura:
+
+| Coluna | Nome | Descrição | Exemplo |
+|--------|------|-----------|---------|
+| **A** | Nome do Aluno | Nome completo do aluno | JOÃO DA SILVA |
+| **B** | Status | Se o aluno consta ou não | CONSTA / NÃO CONSTA |
+| **C** | Pontuação | Nota no formato X / Y | 8 / 10 |
+| **D** | Situação | Aprovação/Reprovação | APROVADO / REPROVADO |
+| **E** | Data/Hora | Data e hora da realização | 26/11/2025 09:22:06 |
+
+### Formatação Visual
+
+#### Cabeçalho
+- **Cor de fundo:** Azul (#366092)
+- **Texto:** Branco, negrito
+- **Alinhamento:** Centralizado
+
+#### Corpo da Tabela
+- **Colunas B, C, D, E:** Centralizadas
+- **Coluna A (Nome):** Alinhada à esquerda
+- **Larguras automáticas:** Ajustadas para melhor visualização
+
+#### Cores por Situação
+
+🟢 **Verde Claro (#C6EFCE):** Alunos APROVADOS
+```
+JOÃO DA SILVA    | CONSTA | 8 / 10  | APROVADO  | 26/11/2025 09:22:06
+```
+
+🔴 **Vermelho Claro (#FFC7CE):** Alunos REPROVADOS
+```
+MARIA SANTOS     | CONSTA | 4 / 10  | REPROVADO | 26/11/2025 10:15:00
+```
+
+⚪ **Branco:** Alunos NÃO ENCONTRADOS
+```
+JOSÉ INEXISTENTE | NÃO CONSTA | - | - | -
+```
+
+### Exemplo Visual
+
+```
+╔════════════════════════╦═══════════╦═══════════╦═══════════╦════════════════════╗
+║ Nome do Aluno          ║  Status   ║ Pontuação ║ Situação  ║     Data/Hora      ║
+╠════════════════════════╬═══════════╬═══════════╬═══════════╬════════════════════╣
+║ JOÃO DA SILVA          ║  CONSTA   ║  8 / 10   ║ APROVADO  ║ 26/11/2025 09:22:06║ ← Verde
+║ MARIA SANTOS           ║  CONSTA   ║  4 / 10   ║ REPROVADO ║ 26/11/2025 10:15:00║ ← Vermelho
+║ JOSÉ ARAUJO            ║  CONSTA   ║ 10 / 10   ║ APROVADO  ║ 26/11/2025 14:30:00║ ← Verde
+║ PEDRO INEXISTENTE      ║ NÃO CONSTA║     -     ║     -     ║         -          ║ ← Branco
+╚════════════════════════╩═══════════╩═══════════╩═══════════╩════════════════════╝
+```
+
+### Vantagens do Formato Excel
+
+✅ **Fácil manipulação:** Filtros, ordenação, fórmulas  
+✅ **Visualização clara:** Cores facilitam identificação rápida  
+✅ **Compartilhamento:** Formato universal, abre em Excel, LibreOffice, Google Sheets  
+✅ **Profissional:** Apresentação adequada para relatórios formais  
+✅ **Análise de dados:** Permite criar gráficos e tabelas dinâmicas
+
+### Como Usar o Arquivo Excel
+
+1. **Abrir:** Clique duplo no arquivo `.xlsx`
+2. **Filtrar:** Use os filtros automáticos no cabeçalho
+3. **Ordenar:** Clique no cabeçalho de qualquer coluna
+4. **Exportar:** Salve como PDF ou outros formatos
+5. **Analisar:** Crie tabelas dinâmicas para estatísticas
 
 ---
 
@@ -502,25 +604,25 @@ Total de alunos consultados: 5
 DETALHAMENTO POR ALUNO:
 ----------------------------------------------------------------------------------------------------
 
-1. MÁRIO SOUZA
+1. ALCENIR FELIX DA SILVA
    Status: CONSTA
    Pontuação: 8 / 10
    Situação: APROVADO
    Data/Hora: 19/11/2025 16:28:32
 
-2. JOÃO SILVA
+2. CHARLES GUIMARAES SANTOS
    Status: CONSTA
    Pontuação: 4 / 10
    Situação: REPROVADO
    Data/Hora: 20/11/2025 10:15:00
 
-3. MARIA DOS SANTOS
+3. CLEOMAR DUARTE TAVARES
    Status: CONSTA
    Pontuação: 10 / 10
    Situação: APROVADO
    Data/Hora: 21/11/2025 09:00:00
 
-4. JOSÉ MARIA
+4. DEBORAH VASQUES SAMPAIO
    Status: CONSTA
    Pontuação: 7 / 10
    Situação: APROVADO
@@ -561,8 +663,8 @@ Escolha uma opção (1 ou 2): 1
 📝 Digite os nomes dos alunos (um por linha).
 Quando terminar, deixe uma linha em branco e pressione Enter:
 
-JOÃO DA SILVA
-MARIA DOS SANTOS
+ALCENIR FELIX DA SILVA
+CHARLES GUIMARAES SANTOS
 
 ✅ 2 nome(s) carregado(s).
 
@@ -570,9 +672,17 @@ MARIA DOS SANTOS
 
 ⚙️ Deseja ativar modo DEBUG para ver detalhes da busca? (s/n): n
 
-📄 Gerando relatório...
+====================================================================================================
+FORMATO DO RELATÓRIO:
+1 - Arquivo TXT (texto)
+2 - Arquivo Excel (.xlsx)
+3 - Ambos (TXT e Excel)
+Escolha o formato (1, 2 ou 3): 3
 
-✅ Relatório gerado com sucesso: relatorio_alunos_20251206_143045.txt
+📄 Gerando relatório(s)...
+
+✅ Relatório TXT gerado com sucesso: relatorio_alunos_20251209_143045.txt
+✅ Relatório Excel gerado com sucesso: relatorio_alunos_20251209_143045.xlsx
 
 ====================================================================================================
 RESUMO DA CONSULTA:
@@ -715,8 +825,9 @@ pip3 install pandas openpyxl
 - ✅ Workaround: Divida a planilha em partes menores
 
 ### 4. Tipos de Arquivo
-- ❌ Suporta apenas Excel (.xlsx, .xls)
-- ❌ Não suporta CSV diretamente
+- ❌ Suporta apenas Excel (.xlsx, .xls) como entrada
+- ✅ Gera relatórios em TXT e/ou Excel (.xlsx)
+- ❌ Não lê CSV diretamente
 - ✅ Workaround: Converta CSV para Excel primeiro
 
 ### 5. Nomes Complexos
@@ -732,21 +843,33 @@ pip3 install pandas openpyxl
 
 #### Curto Prazo
 - [ ] Suporte a múltiplas abas em um arquivo
-- [ ] Exportação para Excel além de TXT
+- [ ] Geração de gráficos estatísticos no Excel
 - [ ] Interface gráfica (GUI) com Tkinter
 - [ ] Barra de progresso para grandes consultas
 
 #### Médio Prazo
 - [ ] Suporte a CSV direto
-- [ ] Geração de gráficos estatísticos
+- [ ] Dashboard com estatísticas visuais
 - [ ] Filtros avançados (aprovados, reprovados, por data)
 - [ ] Histórico de execuções
+- [ ] Envio de relatórios por email
 
 #### Longo Prazo
 - [ ] API REST para integração
 - [ ] Dashboard web interativo
-- [ ] Notificações por email
+- [ ] Notificações automáticas
 - [ ] Integração com Google Sheets API
+
+### ✅ Funcionalidades Implementadas
+
+- [x] **Normalização inteligente de nomes** (acentos, maiúsculas)
+- [x] **Tratamento de duplicatas** (última ocorrência)
+- [x] **Sistema de aprovação/reprovação** (nota ≥ 5)
+- [x] **Modo DEBUG** para troubleshooting
+- [x] **Relatórios em TXT** com formatação
+- [x] **Exportação para Excel** com formatação e cores automáticas
+- [x] **Múltiplos formatos de saída** (TXT, Excel ou ambos)
+- [x] **Suporte a entrada manual e arquivo**
 
 ### Contribuições
 
@@ -771,6 +894,13 @@ O sistema exibe mensagens detalhadas no console durante a execução.
 ---
 
 ## 📝 Notas de Versão
+
+### v1.1 (Dezembro 2025)
+- ✅ **Nova funcionalidade:** Exportação para Excel (.xlsx)
+- ✅ Formatação automática com cores por situação
+- ✅ Opção de gerar TXT, Excel ou ambos os formatos
+- ✅ Cabeçalhos formatados e colunas ajustadas automaticamente
+- ✅ Cores condicionais (verde para aprovados, vermelho para reprovados)
 
 ### v1.0 (Dezembro 2025)
 - ✅ Primeira versão estável
@@ -799,13 +929,13 @@ Este código foi gerado por IA (Claude - Anthropic) e está disponível para uso
 ## 🙏 Agradecimentos
 
 - **Claude (Anthropic):** Geração do código
-- **Christian Sayão Charles:** Testes, validação e refinamentos
+- **Usuário Humano:** Testes, validação e refinamentos
 - **Comunidade Python:** Bibliotecas pandas e openpyxl
 
 ---
 
 **Fim da Documentação**
 
-*Última atualização: Dezembro 2025*  
+*Última atualização: 9 de Dezembro 2025*  
 *Gerado por: Claude (Anthropic AI)*  
 *Validado por: Christian Sayão Charles*

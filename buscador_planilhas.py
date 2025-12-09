@@ -133,6 +133,64 @@ def consultar_alunos(df, lista_nomes, debug=False):
     
     return resultados
 
+def gerar_relatorio_excel(resultados, arquivo_saida='relatorio_alunos.xlsx'):
+    """Gera um relatório em formato Excel"""
+    # Preparar dados para DataFrame
+    dados = []
+    for resultado in resultados:
+        dados.append({
+            'Nome do Aluno': resultado['nome'],
+            'Status': resultado['status'],
+            'Pontuação': resultado['pontuacao_completa'] if resultado['status'] == 'CONSTA' else '-',
+            'Situação': resultado['situacao'] if resultado['situacao'] else '-',
+            'Data/Hora': resultado['data_hora']
+        })
+    
+    # Criar DataFrame
+    df = pd.DataFrame(dados)
+    
+    # Criar arquivo Excel com formatação
+    with pd.ExcelWriter(arquivo_saida, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='Relatório de Alunos', index=False)
+        
+        # Obter a planilha para formatação
+        workbook = writer.book
+        worksheet = writer.sheets['Relatório de Alunos']
+        
+        # Ajustar largura das colunas
+        worksheet.column_dimensions['A'].width = 40  # Nome
+        worksheet.column_dimensions['B'].width = 15  # Status
+        worksheet.column_dimensions['C'].width = 15  # Pontuação
+        worksheet.column_dimensions['D'].width = 15  # Situação
+        worksheet.column_dimensions['E'].width = 20  # Data/Hora
+        
+        # Formatar cabeçalho (negrito e cor de fundo)
+        from openpyxl.styles import Font, PatternFill, Alignment
+        header_fill = PatternFill(start_color='366092', end_color='366092', fill_type='solid')
+        header_font = Font(bold=True, color='FFFFFF')
+        
+        for cell in worksheet[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+        
+        # Centralizar colunas B, C, D, E
+        for row in worksheet.iter_rows(min_row=2, max_row=worksheet.max_row):
+            for idx, cell in enumerate(row):
+                if idx > 0:  # Pula a primeira coluna (nome)
+                    cell.alignment = Alignment(horizontal='center', vertical='center')
+                    
+                # Colorir linha de acordo com situação
+                if idx == 3:  # Coluna Situação
+                    if cell.value == 'APROVADO':
+                        for c in row:
+                            c.fill = PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid')
+                    elif cell.value == 'REPROVADO':
+                        for c in row:
+                            c.fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
+    
+    print(f"\n✅ Relatório Excel gerado com sucesso: {arquivo_saida}")
+
 def gerar_relatorio_txt(resultados, arquivo_saida='relatorio_alunos.txt'):
     """Gera um relatório em formato texto"""
     with open(arquivo_saida, 'w', encoding='utf-8') as f:
@@ -238,12 +296,28 @@ def main():
     
     resultados = consultar_alunos(df, lista_nomes, debug=debug_mode)
     
-    # 4. Gerar relatório
-    print("\n📄 Gerando relatório...")
-    nome_relatorio = f"relatorio_alunos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-    gerar_relatorio_txt(resultados, nome_relatorio)
+    # 4. Escolher formato de saída
+    print("\n" + "=" * 100)
+    print("FORMATO DO RELATÓRIO:")
+    print("1 - Arquivo TXT (texto)")
+    print("2 - Arquivo Excel (.xlsx)")
+    print("3 - Ambos (TXT e Excel)")
+    opcao_formato = input("Escolha o formato (1, 2 ou 3): ").strip()
     
-    # 5. Exibir resumo no console
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    # 5. Gerar relatório conforme escolha
+    print("\n📄 Gerando relatório(s)...")
+    
+    if opcao_formato in ['1', '3']:
+        nome_relatorio_txt = f"relatorio_alunos_{timestamp}.txt"
+        gerar_relatorio_txt(resultados, nome_relatorio_txt)
+    
+    if opcao_formato in ['2', '3']:
+        nome_relatorio_excel = f"relatorio_alunos_{timestamp}.xlsx"
+        gerar_relatorio_excel(resultados, nome_relatorio_excel)
+    
+    # 6. Exibir resumo no console
     print("\n" + "=" * 100)
     print("RESUMO DA CONSULTA:")
     print("=" * 100)
